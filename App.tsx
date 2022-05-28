@@ -2,16 +2,18 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { StyleSheet, SafeAreaView } from 'react-native';
 import GameScreen from './screens/GameScreen';
-import WelcomeScreen from './screens/WelcomeScreen';
+import WelcomeScreen, { GameMode } from './screens/WelcomeScreen';
+
 
 export default function App() {
-  const [gameStarted, setGameStarted] = useState(false);
+  const [gameMode, setGameMode] = useState<GameMode>();
+ 
 
   let currentScreen;
-  if (gameStarted){
-    currentScreen = <GameScreen />;
+  if (gameMode){
+    currentScreen = <GameScreen mode={gameMode} />;
   } else {
-    currentScreen = <WelcomeScreen onPressStart={() => setGameStarted(true)} />
+    currentScreen =<WelcomeScreen onPressStart={() => setGameMode} />
   }
 
   return (
@@ -25,7 +27,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgb(4, 73, 68)',
     alignItems: 'center',
     justifyContent: 'center',
   },
