@@ -13,7 +13,7 @@ export default function App() {
   if (gameMode){
     currentScreen = <GameScreen mode={gameMode} />;
   } else {
-    currentScreen =<WelcomeScreen onPressStart={() => setGameMode} />
+    currentScreen =<WelcomeScreen onPressStart={setGameMode} />
   }
 
   return (
