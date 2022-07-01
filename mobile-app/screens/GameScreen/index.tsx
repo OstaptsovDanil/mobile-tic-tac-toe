@@ -44,98 +44,94 @@ export default function GameScreen({ mode }: GameScreenProps) {
         makeMove(x, y);
     };
 
-    
+    function winning(state: State, who: Cell.X | Cell.O) {       
+        if (state[0][0] === who &&
+            state[0][0] === state[1][0] &&
+            state[1][0] === state[2][0] ||
+
+            state[0][1] === who &&
+            state[0][1] === state[1][1] &&
+            state[1][1] === state[2][1] ||
+
+            state[0][2] === who &&
+            state[0][2] === state[1][2] &&
+            state[1][2] === state[2][2] ||
+
+
+            state[0][0] === who &&
+            state[0][0] === state[0][1] &&
+            state[0][1] === state[0][2] || 
+
+            state[1][0] === who &&
+            state[1][0] === state[1][1] &&
+            state[1][1] === state[1][2] || 
+
+            state[2][0] === who &&
+            state[2][0] === state[2][1] &&
+            state[2][1] === state[2][2] || 
+
+
+            state[0][0] === who &&
+            state[0][0] === state[1][1] &&
+            state[1][1] === state[2][2] ||
+
+            state[0][2] === who &&
+            state[0][2] === state[1][1] &&
+            state[1][1] === [2][0]) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     const onDanilBotMove: OnMoveFn = (state, whoAmI, makeMove) => {
-        const board: State = state;
-        setCurrentPlayer(whoAmI);   
-        
-        const winning = (board: State, player: Cell.X | Cell.O) => {
-            if(
-                (board[0][0] === player && board[0][1] === player && board[0][2] === player) ||
-                (board[1][0] === player && board[1][1] === player && board[1][2] === player) ||
-                (board[2][0] === player && board[2][1] === player && board[2][2] === player) ||
-                (board[0][0] === player && board[1][0] === player && board[2][0] === player) ||
-                (board[0][1] === player && board[1][1] === player && board[2][1] === player) ||
-                (board[0][2] === player && board[1][2] === player && board[2][2] === player) ||
-                (board[0][0] === player && board[1][1] === player && board[2][2] === player) ||
-                (board[0][2] === player && board[1][1] === player && board[2][0] === player)
-            ){
-                return true;
-            } else{
-                return false;
-            }
-        };
-        
-        const minimax = (newBoard: State, player: Cell.X | Cell.O): { position: number[], score: number } => {
-            const emptyCells = [];
-            let enemyPlayer: Cell.X | Cell.O;
-
-            if(whoAmI === Cell.X){
-                enemyPlayer = Cell.O;
-            } else {
-                enemyPlayer = Cell.X;
-            }           
-
-            if(winning(newBoard, whoAmI)){
-                return {position: [1, 1], score: 1};
-            }else if(winning(newBoard, enemyPlayer)){
-                return {position: [1, 1], score: -1}
-            }else if(emptyCells.length === 0) {
-                return {position: [1, 1], score: 0}
-            }
-
-            for (let x = 0; x < Engine.BOARD_SIZE; x++){
-                for (let y = 0; y < Engine.BOARD_SIZE; y++){
-                    if (state[x][y] === Cell.Empty){
-                        emptyCells.push([x, y]);
-                    }
-                }
-            }
-
-            let moves = [];
-            for(var i = 0; i < emptyCells.length; i++){
-                let move = {
-                    position: [emptyCells[i][0], emptyCells[i][1]],
-                    score: 0
-                };
-                newBoard[emptyCells[i][0]][emptyCells[i][1]] = player;
-
-                if(player === whoAmI){
-                    let result = minimax(newBoard, enemyPlayer);
-                    move.score = result.score;
-                }else{
-                    let result = minimax(newBoard, whoAmI);
-                    move.score = result.score;
-                }
-
-                newBoard[emptyCells[i][0]][emptyCells[i][1]] = Cell.Empty;
-                moves.push(move);       
-            }
-
-            var bestMove = 0;
-            if(player = whoAmI){
-                var bestScore = -1000;
-                for(var i = 0; i < moves.length; i++){
-                    if(moves[i].score > bestScore){
-                        bestScore = moves[i].score;
-                        bestMove = i;
-                    }
-                }
-            }else{
-                var bestScore = 1000;
-                for(var i = 0; i < moves.length; i++){
-                    if(moves[i].score < bestScore){
-                        bestScore = moves[i].score;
-                        bestMove = i;
-                    }
-                }
-            }
-            return moves[bestMove];
+        //кто я, кто оппонент
+        setCurrentPlayer(whoAmI);
+        let whoIsOpponent: Cell.X | Cell.O;
+        if (whoAmI === Cell.X){
+            whoIsOpponent = Cell.O;
+        } else{
+            whoIsOpponent = Cell.X;
         }
-        const x = minimax(board, whoAmI).position[0];
-        const y = minimax(board, whoAmI).position[1];
-        makeMove(x, y);
+
+        //пустые клетки
+        const emptyCells = [];
+        for (let i = 0; i < Engine.BOARD_SIZE; i++){
+            for (let j = 0; j < Engine.BOARD_SIZE; j++){
+                if (state[i][j] === Cell.Empty){
+                    emptyCells.push([i, j]);
+                }
+            }
+        }
+        
+        //первый ход в центр
+        if(state[1][1] === Cell.Empty){
+            makeMove(1,1);
+            return;
+        }
+
+        for (let i = 0; i < emptyCells.length; i++){
+            const newState: State = state;
+            newState[emptyCells[i][0]][emptyCells[i][1]] = whoAmI;
+            //если я могу выиграть, то я выигрываю
+            if(winning(newState, whoAmI)){
+                makeMove(emptyCells[i][0], emptyCells[i][1]);
+                return;
+            } else{
+                //если противник может выиграть, то я ему мешаю
+                newState[emptyCells[i][0]][emptyCells[i][1]] = whoIsOpponent;
+                if(winning(newState, whoIsOpponent)){
+                    makeMove(emptyCells[i][0], emptyCells[i][1]);
+                    return;
+                } else{
+                    //если никто не может выиграть, то хожу в случайную клетку
+                    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+                    const [x, y] = emptyCells[randomIndex];
+                    makeMove(x, y);
+                    return;
+                }
+            }
+        }
     }
 
     const onGameEnd = (winner: Cell) => {
@@ -143,7 +139,7 @@ export default function GameScreen({ mode }: GameScreenProps) {
     };
   
     const [engine] = useState(() => {
-        const playerTwo = mode === 'pvplocal' ? onPlayerMove : onBotMove;
+        const playerTwo = mode === 'pvplocal' ? onPlayerMove : onDanilBotMove;
 
         return new Engine(
             onPlayerMove,
