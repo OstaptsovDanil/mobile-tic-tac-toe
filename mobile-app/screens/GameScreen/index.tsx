@@ -93,7 +93,9 @@ export default function GameScreen({ mode }: GameScreenProps) {
         } else{
             whoIsOpponent = Cell.X;
         }
-
+        console.log("игрок: " + whoAmI);
+        console.log("бот: " + whoIsOpponent);
+        
         //пустые клетки
         const emptyCells = [];
         for (let i = 0; i < Engine.BOARD_SIZE; i++){
@@ -111,27 +113,29 @@ export default function GameScreen({ mode }: GameScreenProps) {
         }
 
         for (let i = 0; i < emptyCells.length; i++){
-            const newState: State = state;
+            const newState = [
+                [...state[0]],
+                [...state[1]],
+                [...state[2]]
+            ]
             newState[emptyCells[i][0]][emptyCells[i][1]] = whoAmI;
             //если я могу выиграть, то я выигрываю
             if(winning(newState, whoAmI)){
                 makeMove(emptyCells[i][0], emptyCells[i][1]);
                 return;
-            } else{
-                //если противник может выиграть, то я ему мешаю
-                newState[emptyCells[i][0]][emptyCells[i][1]] = whoIsOpponent;
-                if(winning(newState, whoIsOpponent)){
-                    makeMove(emptyCells[i][0], emptyCells[i][1]);
-                    return;
-                } else{
-                    //если никто не может выиграть, то хожу в случайную клетку
-                    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-                    const [x, y] = emptyCells[randomIndex];
-                    makeMove(x, y);
-                    return;
-                }
+            }
+            //если противник может выиграть, то я ему мешаю
+            newState[emptyCells[i][0]][emptyCells[i][1]] = whoIsOpponent;
+            if(winning(newState, whoIsOpponent)){
+                makeMove(emptyCells[i][0], emptyCells[i][1]);
+                return;               
             }
         }
+        //если никто не может выиграть, то хожу в случайную клетку
+        const randomIndex = Math.floor(Math.random() * emptyCells.length);
+        const [x, y] = emptyCells[randomIndex];
+        makeMove(x, y);
+        return;
     }
 
     const onGameEnd = (winner: Cell) => {
