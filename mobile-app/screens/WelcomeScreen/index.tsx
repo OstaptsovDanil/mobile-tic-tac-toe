@@ -12,7 +12,7 @@ export default function WelcomeScreen({ onPressStart }: WelcomeScreenProps) {
     <View>
       <Button title="Play With a Friend!" onPress={() => onPressStart('pvplocal')} />
       <Button title="Play With Computer!" onPress={() => onPressStart('pvc')} />
-      <Button disabled title="Play Online!" onPress={() => onPressStart('pvponline')} />
+      <Button title="Play Online!" onPress={() => onPressStart('pvponline')} />
     </View>
   );
 }

@@ -77,7 +77,7 @@ export default function GameScreen({ mode }: GameScreenProps) {
 
             state[0][2] === who &&
             state[0][2] === state[1][1] &&
-            state[1][1] === [2][0]) {
+            state[1][1] === state[2][0]) {
             return true;
         } else {
             return false;
@@ -93,8 +93,6 @@ export default function GameScreen({ mode }: GameScreenProps) {
         } else{
             whoIsOpponent = Cell.X;
         }
-        console.log("игрок: " + whoAmI);
-        console.log("бот: " + whoIsOpponent);
         
         //пустые клетки
         const emptyCells = [];
@@ -124,6 +122,13 @@ export default function GameScreen({ mode }: GameScreenProps) {
                 makeMove(emptyCells[i][0], emptyCells[i][1]);
                 return;
             }
+        }
+        for (let i = 0; i < emptyCells.length; i++){
+            const newState = [
+                [...state[0]],
+                [...state[1]],
+                [...state[2]]
+            ]
             //если противник может выиграть, то я ему мешаю
             newState[emptyCells[i][0]][emptyCells[i][1]] = whoIsOpponent;
             if(winning(newState, whoIsOpponent)){
