@@ -1,18 +1,21 @@
-import { OnMoveFn } from "../../../game/Engine"
+import Engine, { Cell, OnMoveFn } from "../../../game/Engine"
 import { useQuery } from "react-query";
 import axios from "axios";
 import {ServerState} from '../../../../server/index';
+import { State } from "../../../game/Engine";
 
-const SERVER_URL = 'http://localhost:3000';
+const SERVER_URL = 'https://042a-78-191-23-196.eu.ngrok.io';
 
-function usePlayerId(gameId: string | undefined){
+export const NETWORK_GAME_QUERY_CACHE_KEY = 'networkGame';
+
+function usePlayerId(enabled: boolean){
     return useQuery(
-        ['playerId', gameId],
-        ({signal}) => {
-            if(!gameId){
-                return;
-            }
-            return axios.post(`${SERVER_URL}/register`, {signal});
+        [NETWORK_GAME_QUERY_CACHE_KEY, 'usePlayerId'],
+        async ({signal}) => {
+            if(!enabled) return;
+
+            const response = await axios.post(`${SERVER_URL}/register`, {signal});
+            return response.data;
         },
         
         {
@@ -24,17 +27,21 @@ function usePlayerId(gameId: string | undefined){
     );
 }
 
-export function useNetworkGame(gameId: string){
-    const { data: playerId, error, isError, isLoading } = usePlayerId(gameId);
+export function useNetworkGame(enabled: boolean){
+    const { data: playerId, error, isError, isLoading } = usePlayerId(enabled);
 
     return useQuery(
-        ['networkGame', gameId, isLoading, isError],
-        ({signal}) => {
-            if(isError){
-                throw error;
-            }
+        [NETWORK_GAME_QUERY_CACHE_KEY, 'useNetworkGame'],
+        async ({signal}) => {
+            if(isError) throw error;
+            if(!playerId) throw new Error('Player ID is not defined');
 
-            return axios.get(`${SERVER_URL}/${playerId}/state`, { signal });
+            let response = await axios.get(`${SERVER_URL}/${playerId}/state`, { signal });
+            while (response.data?.status === 'pending'){
+                await new Promise(resolve => setTimeout(resolve, 250));
+                response = await axios.get(`${SERVER_URL}/${playerId}/state`, { signal });
+            }
+            return { ...response.data, playerId };
         },
         {
             enabled: !isLoading,
@@ -42,19 +49,50 @@ export function useNetworkGame(gameId: string){
             cacheTime: Infinity,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
-            refetchInterval: (data: ServerState | undefined) => {
-                if(data?.status === 'pending') {
-                    return 250;
-                }
-                return false;
-            },
-        }
-        
+        }        
     );
 }
 
-const onNetworkPlayer: OnMoveFn = (state, whoAmI, makeMove) => {
+async function getNewMessages(playerId: string) {
+    let response = await axios.get(`${SERVER_URL}/${playerId}/state`);
+    while (!response.data.messages?.length) {
+      await new Promise(resolve => setTimeout(resolve, 250));
+      response = await axios.get(`${SERVER_URL}/${playerId}/state`);
+    }
+    return response.data.messages;
+  }
 
-};
+function getNetworkPlayer(playerId: string): OnMoveFn {
+    let previousState: State | undefined = undefined;
 
-export default onNetworkPlayer;
+    return (state, whoAmI, makeMove) => {
+        for (let i = 0; i < Engine.BOARD_SIZE; i++){
+            for (let j = 0; j < Engine.BOARD_SIZE; j++) {
+                const foundNewMove = previousState
+                    ? (state [i][j] !== previousState[i][j])
+                    : (state[i][j] !== Cell.Empty);
+                if (foundNewMove && state[i][j] !== whoAmI) {
+                    axios.post(`${SERVER_URL}/${playerId}/message`, {
+                        type: 'move',
+                        move: [i, j],
+                    });
+                    break;
+                }
+            }
+        }
+        
+        previousState = [
+            [...state[0]],
+            [...state[1]],
+            [...state[2]]
+        ];
+
+        getNewMessages(playerId).then(messages => {
+            makeMove(...(messages[0].move as [number, number]));
+        });
+    };
+}
+
+
+
+export default getNetworkPlayer;

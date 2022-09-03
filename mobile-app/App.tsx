@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { StyleSheet, SafeAreaView } from 'react-native';
 import GameScreen from './screens/GameScreen';
 import WelcomeScreen, { GameMode } from './screens/WelcomeScreen';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
+import { NETWORK_GAME_QUERY_CACHE_KEY } from './screens/GameScreen/players/onNetworkPlayer';
+const queryClient = new QueryClient();
 
 export default function App() {
   const [gameMode, setGameMode] = useState<GameMode>();
@@ -11,16 +14,19 @@ export default function App() {
 
   let currentScreen;
   if (gameMode){
+    queryClient.invalidateQueries(NETWORK_GAME_QUERY_CACHE_KEY);
     currentScreen = <GameScreen mode={gameMode} />;
   } else {
     currentScreen =<WelcomeScreen onPressStart={setGameMode} />
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      {currentScreen}
-    </SafeAreaView>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
+        {currentScreen}
+      </SafeAreaView>
+    </QueryClientProvider>
   ); 
 }
 

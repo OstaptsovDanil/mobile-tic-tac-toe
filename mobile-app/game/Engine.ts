@@ -55,7 +55,11 @@ export default class Engine{
     }
 
     getState(): State{
-        return this.state;
+        return [
+            [...this.state[0]],
+            [...this.state[1]],
+            [...this.state[2]]
+        ];
     }
 
     startGame() {
