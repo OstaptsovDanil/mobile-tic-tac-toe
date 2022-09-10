@@ -40,13 +40,18 @@ export default function GameScreen({ mode }: GameScreenProps) {
         networkGameError
     );
 
-    const onPlayerMove: OnMoveFn = (state, whoAmI, makeMove) => {
+    const onPlayerMove: OnMoveFn = (state, whoAmI, makeMove, winner) => {
         setCurrentState(state);
         setCurrentPlayer(whoAmI);
         setCurrentPlayerMakeMove(() => makeMove);
+        setWinner(winner);
     }
 
-    const onBotMove: OnMoveFn = (state, whoAmI, makeMove) => {
+    const onBotMove: OnMoveFn = (state, whoAmI, makeMove, winner) => {
+        if(winner != undefined){
+            return;
+        }
+        
         const emptyCells = [];
         for (let x = 0; x < Engine.BOARD_SIZE; x++){
             for (let y = 0; y < Engine.BOARD_SIZE; y++){
@@ -100,7 +105,11 @@ export default function GameScreen({ mode }: GameScreenProps) {
         }
     }
 
-    const onDanilBotMove: OnMoveFn = (state, whoAmI, makeMove) => {
+    const onDanilBotMove: OnMoveFn = (state, whoAmI, makeMove, winner) => {
+        if(winner != undefined){
+            return;
+        }
+
         //кто я, кто оппонент
         setCurrentPlayer(whoAmI);
         let whoIsOpponent: Cell.X | Cell.O;
@@ -158,10 +167,6 @@ export default function GameScreen({ mode }: GameScreenProps) {
         makeMove(x, y);
         return;
     }
-
-    const onGameEnd = (winner: Cell) => {
-        setWinner(winner);
-    };
   
     const [engine, setEngine] = useState(() => {
         if(mode === 'pvponline') {
@@ -169,12 +174,7 @@ export default function GameScreen({ mode }: GameScreenProps) {
         }
         const playerTwo = mode === 'pvplocal' ? onPlayerMove : onDanilBotMove;
 
-        return new Engine(
-            onPlayerMove,
-            playerTwo,
-            onGameEnd,
-            'random'
-        );
+        return new Engine(onPlayerMove, playerTwo, 'random');
     });
     
     useEffect(() => {
@@ -191,7 +191,6 @@ export default function GameScreen({ mode }: GameScreenProps) {
         setEngine(new Engine(
             onDanilBotMove,
             getNetworkPlayer(initialNetworkGameState.playerId),
-            onGameEnd,
             initialNetworkGameState.messages[0]?.type === 'first-move' ? Cell.X : Cell.O,
         ))
     },[initialNetworkGameState])

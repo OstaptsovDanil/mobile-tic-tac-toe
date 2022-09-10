@@ -2,7 +2,7 @@ import Engine, { Cell }  from "./Engine";
 
 describe('Engine', () => {
     it('starts with empty state', () => {
-        const engine = new Engine(() => {}, () => {}, () => {});
+        const engine = new Engine(() => {}, () => {});
         const state = engine.getState();
 
         expect(state).toStrictEqual([
@@ -24,7 +24,7 @@ describe('Engine', () => {
             }
         })
 
-        const engine = new Engine(onPlayerOneMove, onPlayerTwoMove, ()=>{});
+        const engine = new Engine(onPlayerOneMove, onPlayerTwoMove);
         engine.startGame();
 
         expect(onPlayerOneMove).toHaveBeenCalled();
@@ -42,10 +42,10 @@ describe('Engine', () => {
     it('should make player one go X by default', () => {
         const onPlayerOneMove = jest.fn();
     
-        const engine = new Engine(onPlayerOneMove, () => {}, ()=> {});
+        const engine = new Engine(onPlayerOneMove, () => {});
         engine.startGame();
     
-        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.X, expect.any(Function));
+        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.X, expect.any(Function), undefined);
     });
     
     it('should allow player one go O', () => {
@@ -54,11 +54,11 @@ describe('Engine', () => {
             makeMove(0,0);
         });
     
-        const engine = new Engine(onPlayerOneMove, onPlayerTwoMove, () => {}, Cell.O);
+        const engine = new Engine(onPlayerOneMove, onPlayerTwoMove, Cell.O);
         engine.startGame();
     
-        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.O, expect.any(Function));
-        expect(onPlayerTwoMove).toHaveBeenCalledWith(expect.anything(), Cell.X, expect.any(Function));
+        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.O, expect.any(Function), undefined);
+        expect(onPlayerTwoMove).toHaveBeenCalledWith(expect.anything(), Cell.X, expect.any(Function), undefined);
     })
 
     it ('should allow assigning a side randomly', () => {
@@ -70,19 +70,19 @@ describe('Engine', () => {
         const spyedOnMathRandom = jest.spyOn(Math, 'random');
 
         spyedOnMathRandom.mockReturnValueOnce(0.7);
-        const engineOne = new Engine(onPlayerOneMove, onPlayerTwoMove, () => {}, 'random');
+        const engineOne = new Engine(onPlayerOneMove, onPlayerTwoMove, 'random');
         engineOne.startGame();
         expect(spyedOnMathRandom).toHaveBeenCalled();
-        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.X, expect.any(Function));
+        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.X, expect.any(Function), undefined);
 
         spyedOnMathRandom.mockReset();
         onPlayerOneMove.mockReset();
 
         spyedOnMathRandom.mockReturnValueOnce(0.4);
-        const engineTwo = new Engine(onPlayerOneMove, onPlayerTwoMove, () => {}, 'random');
+        const engineTwo = new Engine(onPlayerOneMove, onPlayerTwoMove, 'random');
         engineTwo.startGame();
         expect(spyedOnMathRandom).toHaveBeenCalled();
-        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.O, expect.any(Function));
+        expect(onPlayerOneMove).toHaveBeenCalledWith(expect.anything(), Cell.O, expect.any(Function), undefined);
     });
     
 });
